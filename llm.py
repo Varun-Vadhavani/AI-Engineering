@@ -74,3 +74,35 @@ def ask_image(path: str, prompt: str, max_tokens: int = 100):
     if isinstance(content, list):
         content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
     return content.strip(), d.get("usage", {}).get("prompt_tokens", 0)
+
+def ask_full(prompt: str, max_tokens: int = 150, temperature: float | None = None,
+             stop_sequences: list[str] | None = None, model: str = "qwen/qwen3.8-27b"):
+    body = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    if temperature is not None:
+        body["temperature"] = temperature
+    if stop_sequences:
+        body["stop"] = stop_sequences
+
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json=body,
+        timeout=60,
+    )
+    response.raise_for_status()
+    d = response.json()
+    choice = d["choices"][0]
+    content = choice["message"].get("content")
+    if not isinstance(content, str) or not content.strip():
+        finish_reason = choice.get("finish_reason", "unknown")
+        raise RuntimeError(
+            f"Model returned no answer (finish_reason={finish_reason!r})."
+        )
+    return content.strip(), choice.get("finish_reason"), d.get("usage", {})
