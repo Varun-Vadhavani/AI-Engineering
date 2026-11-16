@@ -1,0 +1,7 @@
+.env
+venv/
+__pycache__/
+last_answer.json
+errors.log
+summaries.jsonl
+calls.jsonl
