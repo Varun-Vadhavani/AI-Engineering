@@ -33,12 +33,12 @@ CHECKS = {
     10: lambda o: "?" in answer_part(o),
 }
 
-def run_once(system, send_docs=True):
+def run_once(system, send_docs=True, model=None):
     """Run every test once with this system prompt. Returns {id: (passed, reply)}."""
     results = {}
     for t in TESTS:
         user = (f"<docs>\n{DOCS}\n</docs>\n\n" if send_docs else "") + f"<question>\n{t['q']}\n</question>"
-        out = llm.invoke([SystemMessage(content=system), HumanMessage(content=user)]).content.strip()
+        out = (model or llm).invoke([SystemMessage(content=system), HumanMessage(content=user)]).content.strip()
         results[t["id"]] = (bool(CHECKS[t["id"]](norm(out))), out)
     return results
 
